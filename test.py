@@ -27,7 +27,7 @@ def main() -> None:
     save = False
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # 替换以下行为你的图像文件夹路径
-    image_folder = "/root/autodl-tmp/0.01_3"
+    image_folder = "/root/autodl-tmp/1_L2CarliniWagnerAttack_2"
     label_file = "/root/autodl-tmp/label.txt"
 
     transform = transforms.Compose([transforms.ToTensor()])

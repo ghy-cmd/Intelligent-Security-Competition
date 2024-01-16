@@ -16,17 +16,18 @@ from foolbox.distances import T
 
 from torchvision import transforms
 import torch
-from cifar10_models.googlenet import googlenet
+from cifar10_models.vgg import vgg16_bn
 from data import CifarDataset
 from torch.utils.data import DataLoader
 import numpy as np
 from PIL import Image
+from foolbox.distances import l0, l1, l2, linf
 
 
 def main() -> None:
-    batch_size = 100
+    batch_size = 250
     num_wokers = 4
-    save = True
+    save = True # 保存输出
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # 替换以下行为你的图像文件夹路径
     image_folder = "/root/autodl-tmp/images"
@@ -37,7 +38,7 @@ def main() -> None:
     dataloader = DataLoader(custom_dataset, batch_size=batch_size, shuffle=True)
 
     # instantiate a model (could also be a TensorFlow or JAX model)
-    model = googlenet(pretrained=True, device="cuda:0")
+    model = vgg16_bn(pretrained=True, device="cuda:0") # TODO:换别的
     model.eval()  # for evaluation
     # model = models.resnet18(pretrained=True).eval()
     preprocessing = dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], axis=-3)
@@ -45,7 +46,7 @@ def main() -> None:
 
     total_samples = 0
     correct_predictions = 0
-    for batch in dataloader:
+    for batch in dataloader: # 原始正确率
         images, labels, _ = batch
         predictions = fmodel(images).argmax(axis=-1)
         # 累积样本数和正确预测的样本数
@@ -56,10 +57,20 @@ def main() -> None:
 
     # apply the attack
     # attack = foolbox.attacks.LinfFastGradientAttack(random_start=False)
-    attack = foolbox.attacks.L2RepeatedAdditiveGaussianNoiseAttack(repeats=100, check_trivial=True)
+    # attack = foolbox.attacks.L2RepeatedAdditiveGaussianNoiseAttack(repeats=100, check_trivial=True)
     # attack = foolbox.attacks.SaltAndPepperNoiseAttack(steps=100, across_channels=True, channel_axis=None)
     # attack = foolbox.attacks.LinfDeepFoolAttack(steps=50, candidates=10, overshoot=0.02, loss="logits")
-
+    attack_name = "L2CarliniWagnerAttack"
+    if attack_name == "InversionAttack": # 目前效果最好的 2023年12月13日 29分
+        attack = foolbox.attacks.InversionAttack(distance=linf)  # L2没什么用
+    elif attack_name == "BinarySearchContrastReductionAttack":
+        attack = foolbox.attacks.BinarySearchContrastReductionAttack(distance=linf, binary_search_steps=15, target=0.5)
+    elif attack_name == "GaussianBlurAttack":
+        attack = foolbox.attacks.GaussianBlurAttack(distance=linf, steps=1000, channel_axis=None, max_sigma=None)
+    elif attack_name == "L2CarliniWagnerAttack":
+        attack = foolbox.attacks.L2CarliniWagnerAttack(binary_search_steps=9,
+                                                       steps=10000, stepsize=0.01, confidence=0,
+                                                       initial_const=0.001, abort_early=True)
     epsilons = [
         0.0,
         0.0002,
@@ -75,14 +86,14 @@ def main() -> None:
         0.5,
         1.0,
     ]
-    epsilons = 10
+    epsilons = 5
     base_directory = "/root/autodl-tmp/" + str(epsilons)
     # 如果目录已经存在，创建一个新的目录
     folder_suffix = 1
-    save_directory = base_directory + '_' + str(folder_suffix)
+    save_directory = base_directory + '_' + attack_name + '_' + str(folder_suffix)
     while os.path.exists(save_directory):
         folder_suffix += 1
-        save_directory = base_directory + '_' + str(folder_suffix)
+        save_directory = base_directory + '_' + attack_name + '_' + str(folder_suffix)
     # 创建新目录
     os.makedirs(save_directory)
     batch_num = 0
@@ -115,4 +126,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    # os.system("/usr/bin/shutdown")
+    os.system("/usr/bin/shutdown")
