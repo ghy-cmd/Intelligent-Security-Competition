@@ -1,0 +1,13 @@
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 0.1  
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 0.25
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 0.25
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 0.5
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 0.75
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 1
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 1.25
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 1.5
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 1.75
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 2
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 2.25
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 2.5
+python main_yyf.py --attack_name LinfDeepFoolAttack --epsilons 5
